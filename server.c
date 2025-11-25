@@ -15,6 +15,19 @@
 #define IP_LOCALHOST "127.0.0.1"
 #define PROT_IP 0
 
+#define NUM_CMDS_SUPPORTED 2
+
+int is_supported_cmd(char *cmd) {
+  char *cmds_supported[] = {"ls\n", "pwd\n"};
+
+  for (int i = 0; i < NUM_CMDS_SUPPORTED; i++) {
+    if (strcmp(cmds_supported[i], cmd) == 0) {
+      return 0;
+    }
+  }
+  return -1;
+}
+
 int main() {
   struct sockaddr_in sin;
   char buf[MAX_LINE];
@@ -44,8 +57,14 @@ int main() {
       perror("main: accept error");
       exit(1);
     }
-    while ((buf_len = recv(accept_fd, buf, sizeof(buf), 0)))
+    while ((buf_len = recv(accept_fd, buf, sizeof(buf), 0))) {
       fputs(buf, stdout);
+      if (is_supported_cmd(buf) == 0) {
+        send(accept_fd, "GOOD CMD\n", 11, 0);
+      } else {
+        send(accept_fd, "BAD CMD\n", 10, 0);
+      }
+    }
     close(accept_fd);
   }
 }

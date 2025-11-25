@@ -21,7 +21,7 @@ int main(int argc, char * argv[]) {
     //struct hostent *hp;
     struct sockaddr_in sin;
     char *host;
-    char buf[MAX_LINE];
+    char buf[MAX_LINE], buf_recv[MAX_LINE];
     int sock_fd;
     int len;
 
@@ -62,5 +62,9 @@ int main(int argc, char * argv[]) {
         buf[MAX_LINE-1] = '\0';
         len = strlen(buf) + 1;
         send(sock_fd, buf, len, 0);
+
+        // reply from server
+        recv(sock_fd, buf_recv, MAX_LINE, 0);
+        fputs(buf_recv, stdout);
     }
 }
