@@ -1,0 +1,8 @@
+{
+  "files.associations": {
+    "*.cpp": "cpp",
+    "socket.h": "c",
+    "inet.h": "c",
+    "in.h": "c"
+  }
+}

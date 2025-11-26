@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -17,8 +18,16 @@
 
 #define NUM_CMDS_SUPPORTED 2
 
+void convert_to_nullterm(char *buf) {
+  for (int i = 0; i < strlen(buf); i++) {
+    if (buf[i] == '\n') {
+      buf[i] = '\0';
+    }
+  }
+}
+
 int is_supported_cmd(char *cmd) {
-  char *cmds_supported[] = {"ls\n", "pwd\n"};
+  char *cmds_supported[] = {"ls", "pwd"};
 
   for (int i = 0; i < NUM_CMDS_SUPPORTED; i++) {
     if (strcmp(cmds_supported[i], cmd) == 0) {
@@ -58,9 +67,22 @@ int main() {
       exit(1);
     }
     while ((buf_len = recv(accept_fd, buf, sizeof(buf), 0))) {
-      fputs(buf, stdout);
+      convert_to_nullterm(buf);
+      puts(buf);
+
       if (is_supported_cmd(buf) == 0) {
-        send(accept_fd, "GOOD CMD\n", 11, 0);
+        pid_t pid = fork();
+        int status;
+        if (pid == 0) {
+          // child
+          puts(buf);
+          execlp(buf, buf, NULL);
+          perror("main: returned from exec");
+        } else {
+          waitpid(pid, &status, 0);
+          printf("Back\n");
+        }
+        
       } else {
         send(accept_fd, "BAD CMD\n", 10, 0);
       }
