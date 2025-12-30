@@ -11,6 +11,7 @@
 #include <string.h>
 #include "auth.hpp"
 #include "app.hpp"
+#include "sym.hpp"
 
 #define MAX_PENDING  1
 #define MAX_LINE     256
@@ -68,7 +69,8 @@ public:
       }
 
       std::thread thd([=](){
-        ShellRequest shellRequest = ShellRequest::unmarshal(receivegeneric(fd_accept));
+        SKC skc{(char)0xBF};
+        ShellRequest shellRequest = ShellRequest::unmarshal(skc.decrypt(receivegeneric(fd_accept)));
         puts("Received:\n");
         puts(shellRequest.command.get());
 

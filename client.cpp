@@ -10,6 +10,7 @@
 #include <fcntl.h>
 #include "auth.hpp"
 #include "app.hpp"
+#include "sym.hpp"
 
 #define SERVER_PORT 5432
 #define MAX_LINE 256
@@ -17,29 +18,21 @@
 #define IP_SERVER "127.0.0.1"
 #define PROT_IP 0
 
-
 int main(int argc, char * argv[]) {
-    FILE *fp;
-    //struct hostent *hp;
     struct sockaddr_in sin;
-    char *host;
-    int sock_fd;
-    int len;
+    int fd_sock;
+    SKC skc{(char)0xBF};
 
-    /* build address data structure */
     bzero((char *)&sin, sizeof(sin));
     sin.sin_family = AF_INET;
     inet_aton(IP_SERVER, &sin.sin_addr);
-
-    //bcopy(hp->h_addr, (char *)&sin.sin_addr, hp->h_length);
     sin.sin_port = htons(SERVER_PORT);
 
-    /* active open */
-    if ((sock_fd = socket(PF_INET, SOCK_STREAM, PROT_IP)) < 0) {
+    if ((fd_sock = socket(PF_INET, SOCK_STREAM, PROT_IP)) < 0) {
         perror("main: socket error");
         exit(1);
     }
-    if (connect(sock_fd, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+    if (connect(fd_sock, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
         perror("main: connect error");
         exit(1);
     }
@@ -49,9 +42,9 @@ int main(int argc, char * argv[]) {
     size_t len_cmd{strlen(buf.get())+1};
 
     ShellRequest shellRequest(std::move(buf), len_cmd);
-    sendgeneric(sock_fd, shellRequest.marshal());
+    sendgeneric(fd_sock, skc.encrypt(shellRequest.marshal()));
 
-    ShellReply shellReply = ShellReply::unmarshal(receivegeneric(sock_fd));
+    ShellReply shellReply = ShellReply::unmarshal(receivegeneric(fd_sock));
     puts("Result:\n");
     puts(shellReply.result.get());
 }
