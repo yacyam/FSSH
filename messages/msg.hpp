@@ -1,6 +1,7 @@
 #ifndef MSG_HPP
 #define MSG_HPP
 #include <unistd.h>
+#include <cassert>
 #include <iostream>
 
 // Bytes object for sending messages:
