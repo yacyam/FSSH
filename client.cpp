@@ -9,7 +9,7 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include "messages/auth.hpp"
-// #include "messages/app.hpp"
+#include "messages/app.hpp"
 
 #define SERVER_PORT 5432
 #define MAX_LINE 256
@@ -44,30 +44,14 @@ int main(int argc, char * argv[]) {
         exit(1);
     }
 
-    size_t uid = 4;
+    std::unique_ptr<char[]> buf = std::make_unique<char[]>(MAX_LINE);
+    fgets(buf.get(), MAX_LINE, stdin);
+    size_t len_cmd{strlen(buf.get())+1};
 
-    SessionRequest req{uid};
-    sendgeneric(sock_fd, req.marshal());
+    ShellRequest shellRequest(std::move(buf), len_cmd);
+    sendgeneric(sock_fd, shellRequest.marshal());
 
-    // std::unique_ptr<char[]> buf = std::make_unique<char[]>(MAX_LINE);
-    // fgets(buf.get(), MAX_LINE, stdin);
-    // ShellRequest shellRequest(std::move(buf));
-    // sendgeneric(sock_fd, shellRequest.marshal());
-
-    // std::cout << "sent" << std::endl;
-    // ShellReply shellReply = ShellReply::unmarshal(receivegeneric(sock_fd));
-    // puts("Result:\n");
-    // puts(shellReply.result.get());
-
-
-    // /* main loop: get and send lines of text */
-    // while (fgets(buf, sizeof(buf), stdin)) {
-    //     buf[MAX_LINE-1] = '\0';
-    //     len = strlen(buf) + 1;
-    //     send(sock_fd, buf, len, 0);
-
-    //     // reply from server
-    //     // recv(sock_fd, buf_recv, MAX_LINE, 0);
-    //     fputs(buf_recv, stdout);
-    // }
+    ShellReply shellReply = ShellReply::unmarshal(receivegeneric(sock_fd));
+    puts("Result:\n");
+    puts(shellReply.result.get());
 }
