@@ -1,3 +1,4 @@
+SRCS=./messages/auth.hpp ./messages/msg.hpp
 
 server: server.cpp
 	g++ server.cpp -o server.out

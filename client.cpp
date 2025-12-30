@@ -8,6 +8,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include "messages/auth.hpp"
 
 #define SERVER_PORT 5432
 #define MAX_LINE 256
@@ -42,14 +43,20 @@ int main(int argc, char * argv[]) {
         perror("main: connect error");
         exit(1);
     }
-    /* main loop: get and send lines of text */
-    while (fgets(buf, sizeof(buf), stdin)) {
-        buf[MAX_LINE-1] = '\0';
-        len = strlen(buf) + 1;
-        send(sock_fd, buf, len, 0);
 
-        // reply from server
-        // recv(sock_fd, buf_recv, MAX_LINE, 0);
-        fputs(buf_recv, stdout);
-    }
+    size_t uid = 4;
+
+    SessionRequest req{uid};
+    sendgeneric(sock_fd, req.marshal());
+
+    // /* main loop: get and send lines of text */
+    // while (fgets(buf, sizeof(buf), stdin)) {
+    //     buf[MAX_LINE-1] = '\0';
+    //     len = strlen(buf) + 1;
+    //     send(sock_fd, buf, len, 0);
+
+    //     // reply from server
+    //     // recv(sock_fd, buf_recv, MAX_LINE, 0);
+    //     fputs(buf_recv, stdout);
+    // }
 }
