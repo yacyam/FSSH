@@ -1,57 +1,45 @@
+#ifndef MSG_HPP
+#define MSG_HPP
 #include <stdlib.h>
 
 // Bytes object for sending messages:
-//   The "data_len_prepended" ([len | value] byte array)
-//   The "len_of_concat" (the length of the entire [len | value] byte array)
 class Bytes {
 public:
-  char *data_len_prepended;
-  size_t len_of_concat;
+  std::unique_ptr<char[]> data;
+  size_t len;
 
-  Bytes(char *data_len_prepended, size_t len_of_concat) : 
-    data_len_prepended(data_len_prepended), len_of_concat(len_of_concat) {}
+  Bytes(std::unique_ptr<char[]> data, size_t len) : data(std::move(data)), len(len) {}
 };
 
-void sendgeneric(int fd_sock, Bytes bytes) {
+void _write_until_finished(int fd, char *data, size_t size) {
   size_t bytes_written{0};
-  while (bytes_written < bytes.len_of_concat) {
-    bytes_written += write(fd_sock, 
-                           &bytes.data_len_prepended[bytes_written], 
-                            bytes.len_of_concat - bytes_written);
+  while (bytes_written < size) { 
+    bytes_written += write(fd, &data[bytes_written], size - bytes_written);
   }
-  assert(bytes_written == bytes.len_of_concat);
+  assert(bytes_written == size);
 }
 
-std::unique_ptr<char[]> receivegeneric(int fd_sock) {
-  // holds the length of the data in the suffix of the message
-  std::unique_ptr<char[]> buf_len_prepended = std::make_unique<char[]>(sizeof(size_t));
-
-  // read the prefix of the message 
-  // (first size_t bytes determine the size of the remainder of the message)
-  size_t bytes_read_in_prefix{0};
-  while (bytes_read_in_prefix < sizeof(size_t)) {
-    bytes_read_in_prefix += read(fd_sock, 
-                                 &buf_len_prepended[bytes_read_in_prefix], 
-                                 sizeof(size_t) - bytes_read_in_prefix);
+void _read_until_finished(int fd, char *buf, size_t size) {
+  size_t bytes_read{0};
+  while (bytes_read < size) {
+    bytes_read += read(fd, &buf[bytes_read], size - bytes_read);
   }
-  assert(bytes_read_in_prefix == sizeof(size_t));
+  assert(bytes_read == size);
+}
 
-  // parse the remaining size using the prefix just read
-  size_t total_bytes_data{*((size_t*)buf_len_prepended.get())};
-  size_t total_bytes_full_msg{sizeof(size_t) + total_bytes_data};
+void sendgeneric(int fd_sock, Bytes bytes) {
+  _write_until_finished(fd_sock, (char*)&bytes.len, sizeof(bytes.len));
+  _write_until_finished(fd_sock, bytes.data.get(), bytes.len);
+}
 
-  std::unique_ptr<char[]> buf_full_msg = std::make_unique<char[]>(total_bytes_full_msg);
-  memcpy(buf_full_msg.get(), buf_len_prepended.get(), sizeof(size_t));
+Bytes receivegeneric(int fd_sock) {
+  size_t total_bytes_data{0};
+  _read_until_finished(fd_sock, (char*)&total_bytes_data, sizeof(size_t));
 
-  // read the remainder of the message
-  size_t bytes_read_full_msg{sizeof(size_t)};
-  while (bytes_read_full_msg < total_bytes_full_msg) {
-    bytes_read_full_msg += read(fd_sock, 
-                                &buf_full_msg[bytes_read_full_msg], 
-                                total_bytes_full_msg - bytes_read_full_msg);
-  }
-  assert(bytes_read_full_msg == total_bytes_full_msg);
-  return std::move(buf_full_msg);
+  std::unique_ptr<char[]> buf_data = std::make_unique<char[]>(total_bytes_data);
+  _read_until_finished(fd_sock, buf_data.get(), total_bytes_data);
+
+  return Bytes(std::move(buf_data), total_bytes_data);
 }
 
 // TODO: maybe variadic function for generalized serialization?
@@ -63,7 +51,9 @@ public:
   virtual Bytes marshal() = 0;
 
   // converts a byte stream [len | data] into an instance of *this object
-  static Derived unmarshal(std::unique_ptr<char[]> data_len_prepended) { 
-    return std::move(Derived::unmarshal(data_len_prepended)); 
+  static Derived unmarshal(Bytes bytes) { 
+    return std::move(Derived::unmarshal(bytes)); 
   }
 };
+
+#endif // MSG_HPP

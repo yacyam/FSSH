@@ -9,6 +9,7 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include "messages/auth.hpp"
+// #include "messages/app.hpp"
 
 #define SERVER_PORT 5432
 #define MAX_LINE 256
@@ -22,7 +23,6 @@ int main(int argc, char * argv[]) {
     //struct hostent *hp;
     struct sockaddr_in sin;
     char *host;
-    char buf[MAX_LINE], buf_recv[MAX_LINE];
     int sock_fd;
     int len;
 
@@ -48,6 +48,17 @@ int main(int argc, char * argv[]) {
 
     SessionRequest req{uid};
     sendgeneric(sock_fd, req.marshal());
+
+    // std::unique_ptr<char[]> buf = std::make_unique<char[]>(MAX_LINE);
+    // fgets(buf.get(), MAX_LINE, stdin);
+    // ShellRequest shellRequest(std::move(buf));
+    // sendgeneric(sock_fd, shellRequest.marshal());
+
+    // std::cout << "sent" << std::endl;
+    // ShellReply shellReply = ShellReply::unmarshal(receivegeneric(sock_fd));
+    // puts("Result:\n");
+    // puts(shellReply.result.get());
+
 
     // /* main loop: get and send lines of text */
     // while (fgets(buf, sizeof(buf), stdin)) {

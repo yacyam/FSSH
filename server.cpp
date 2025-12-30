@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <string.h>
 #include "messages/auth.hpp"
+// #include "messages/app.hpp"
 
 #define SERVER_PORT  5432
 #define MAX_PENDING  1
@@ -54,6 +55,10 @@ int main() {
     SessionRequest sessionRequest = SessionRequest::unmarshal(receivegeneric(accept_fd));
     std::cout << "Client ID=" << sessionRequest.uid << std::endl;
     while (true);
+    // ShellRequest shellRequest = ShellRequest::unmarshal(receivegeneric(accept_fd));
+    // puts("Received:\n");
+    // puts(shellRequest.command.get());
+    // while(true);
 
     // while ((buf_len = recv(accept_fd, buf, sizeof(buf), 0))) {
     //   puts(buf);

@@ -13,19 +13,14 @@ public:
 
   SessionRequest(size_t uid) : uid(uid) {}
 
-  SessionRequest(int fd_sock) { unmarshal(receivegeneric(fd_sock)); }
-
   Bytes marshal() {
-    //                                      length            uid
-    char *data_len_prepended = new char[sizeof(size_t) + sizeof(size_t)];
-    *((size_t*)data_len_prepended) = sizeof(size_t);
-    *(((size_t*)data_len_prepended) + 1) = uid;
-
-    return Bytes(data_len_prepended, sizeof(size_t) + sizeof(size_t));
+    std::unique_ptr<char[]> data = std::make_unique<char[]>(sizeof(uid));
+    memcpy(data.get(), &uid, sizeof(uid));
+    return Bytes(std::move(data), sizeof(uid));
   }
 
-  static SessionRequest unmarshal(std::unique_ptr<char[]> data_len_prepended) {
-    assert(*((size_t*)data_len_prepended.get()) == sizeof(size_t));
-    return SessionRequest(*(((size_t*)data_len_prepended.get()) + 1));
+  static SessionRequest unmarshal(Bytes bytes) {
+    assert(bytes.len == sizeof(uid));
+    return SessionRequest(*((size_t*)bytes.data.get()));
   }
 };
