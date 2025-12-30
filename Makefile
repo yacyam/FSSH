@@ -1,11 +1,13 @@
-SRCS=./messages/auth.hpp ./messages/msg.hpp
+INCLUDE=-Imessages
+SRCS_MSG=$(shell find messages -name '*.cpp')
+SRCS=$(SRCS_MSG)
 
-server: server.cpp
-	g++ server.cpp -o server.out
+server: server.cpp $(SRCS)
+	g++ $(INCLUDE) server.cpp $(SRCS) -o server.out
 	./server.out
 
 client: client.cpp
-	g++ client.cpp -o client.out
+	g++ $(INCLUDE) client.cpp $(SRCS) -o client.out
 	./client.out
 
 clean:

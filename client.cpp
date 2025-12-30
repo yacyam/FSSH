@@ -8,8 +8,8 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
-#include "messages/auth.hpp"
-#include "messages/app.hpp"
+#include "auth.hpp"
+#include "app.hpp"
 
 #define SERVER_PORT 5432
 #define MAX_LINE 256

@@ -1,6 +1,7 @@
 #ifndef MSG_HPP
 #define MSG_HPP
-#include <stdlib.h>
+#include <unistd.h>
+#include <iostream>
 
 // Bytes object for sending messages:
 class Bytes {
@@ -11,7 +12,7 @@ public:
   Bytes(std::unique_ptr<char[]> data, size_t len) : data(std::move(data)), len(len) {}
 };
 
-void _write_until_finished(int fd, char *data, size_t size) {
+inline void _write_until_finished(int fd, char *data, size_t size) {
   size_t bytes_written{0};
   while (bytes_written < size) { 
     bytes_written += write(fd, &data[bytes_written], size - bytes_written);
@@ -19,7 +20,7 @@ void _write_until_finished(int fd, char *data, size_t size) {
   assert(bytes_written == size);
 }
 
-void _read_until_finished(int fd, char *buf, size_t size) {
+inline void _read_until_finished(int fd, char *buf, size_t size) {
   size_t bytes_read{0};
   while (bytes_read < size) {
     bytes_read += read(fd, &buf[bytes_read], size - bytes_read);
@@ -27,12 +28,12 @@ void _read_until_finished(int fd, char *buf, size_t size) {
   assert(bytes_read == size);
 }
 
-void sendgeneric(int fd_sock, Bytes bytes) {
+inline void sendgeneric(int fd_sock, Bytes bytes) {
   _write_until_finished(fd_sock, (char*)&bytes.len, sizeof(bytes.len));
   _write_until_finished(fd_sock, bytes.data.get(), bytes.len);
 }
 
-Bytes receivegeneric(int fd_sock) {
+inline Bytes receivegeneric(int fd_sock) {
   size_t total_bytes_data{0};
   _read_until_finished(fd_sock, (char*)&total_bytes_data, sizeof(size_t));
 
