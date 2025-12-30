@@ -1,10 +1,10 @@
 
-server: server.c
-	gcc -o server.out server.c
+server: server.cpp
+	g++ server.cpp -o server.out
 	./server.out
 
-client: client.c
-	gcc -o client.out client.c
+client: client.cpp
+	g++ client.cpp -o client.out
 	./client.out
 
 clean:

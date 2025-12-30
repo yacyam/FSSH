@@ -12,7 +12,7 @@
 #define SERVER_PORT 5432
 #define MAX_LINE 256
 
-#define IP_LOCALHOST "127.0.0.1"
+#define IP_SERVER "127.0.0.1"
 #define PROT_IP 0
 
 
@@ -25,25 +25,10 @@ int main(int argc, char * argv[]) {
     int sock_fd;
     int len;
 
-    // if (argc==2) {
-    //     host = argv[1];
-    // }
-    // else {
-    //     fprintf(stderr, "usage: simplex-talk host\n");
-    //     exit(1);
-    // }
-
-    // /* translate host name into peer's IP address */
-    // hp = gethostbyname(host);
-    // if (!hp) {
-    //     fprintf(stderr, "simplex-talk: unknown host: %s\n", host);
-    //     exit(1);
-    // }
-
     /* build address data structure */
     bzero((char *)&sin, sizeof(sin));
     sin.sin_family = AF_INET;
-    inet_aton(IP_LOCALHOST, &sin.sin_addr.s_addr);
+    inet_aton(IP_SERVER, &sin.sin_addr);
 
     //bcopy(hp->h_addr, (char *)&sin.sin_addr, hp->h_length);
     sin.sin_port = htons(SERVER_PORT);
@@ -64,7 +49,7 @@ int main(int argc, char * argv[]) {
         send(sock_fd, buf, len, 0);
 
         // reply from server
-        recv(sock_fd, buf_recv, MAX_LINE, 0);
+        // recv(sock_fd, buf_recv, MAX_LINE, 0);
         fputs(buf_recv, stdout);
     }
 }
