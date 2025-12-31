@@ -21,7 +21,7 @@ public:
   size_t len;
 
   ShellReply(std::unique_ptr<char[]> result, size_t len);
-  
+
   Bytes marshal();
   static ShellReply unmarshal(Bytes bytes);
 };

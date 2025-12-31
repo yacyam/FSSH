@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cassert>
+#include <thread>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -51,21 +52,20 @@ ShellReply ShellRequest::exec() {
 
     // convert STDOUT to the write end of the pipe
     dup2(pipefd[PIPE_WRITE], STDOUT_FILENO);
-    close(pipefd[PIPE_WRITE]);
+    close(pipefd[PIPE_READ]);
     execlp("bash", "bash", "-c", command.get(), NULL); // TODO: very dangerous
     assert(false);
   } else {
     // parent
     close(pipefd[PIPE_WRITE]);
-    waitpid(pid, &status, 0);
-    assert(WIFEXITED(status));
 
-    // read all the bytes outputted by the child process
+    // interestingly, the pipe buffer is only 64KB, so waitpid for large
+    // commands will hang forever (as the child process blocks indefinitely).
     size_t bytes_read_iter{0};
     do {
-      bytes_read_iter = read(
-        pipefd[PIPE_READ], &buf_result.get()[total_bytes_read], BUF_SIZ - total_bytes_read
-      );
+      bytes_read_iter = read(pipefd[PIPE_READ], 
+                             &buf_result.get()[total_bytes_read], 
+                             BUF_SIZ - total_bytes_read);
       total_bytes_read += bytes_read_iter;
     } while (bytes_read_iter > 0);
     close(pipefd[PIPE_READ]);
