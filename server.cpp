@@ -25,6 +25,25 @@ class ConnectionAcceptor {
 public:
   ConnectionAcceptor(std::string ip, size_t port, size_t max_connections) : 
     ip(ip), port(port), max_connections(max_connections) {}
+
+  void handshake(int fd_accepted_conn) {
+    SessionRequest sessionRequest = SessionRequest::unmarshal(receivegeneric(fd_accepted_conn));
+
+    switch (sessionRequest.connection) {
+    case connection_register:
+      std::cout << "ConnectionAcceptor.handshake: Register Unimplemented" << std::endl;
+      close(fd_accepted_conn);
+      break;
+    case connection_login:
+      std::cout << "ConnectionAcceptor.handshake: Login Unimplemented" << std::endl;
+      close(fd_accepted_conn);
+      break;
+    default:
+      std::cout << "ConnectionAcceptor.handshake: Unknown Connection Type" << std::endl;
+      close(fd_accepted_conn);
+      break;
+    }
+  }
   
   void run() {
     struct sockaddr_in sin;
@@ -60,7 +79,7 @@ public:
       exit(1);
     }
 
-    // get connection, spawn thread to handle
+    // get connection, spawn thread to handle connection
     while(true) {
       size_t fd_accept{0};
       if ((fd_accept = accept(fd_sock, (struct sockaddr *)&sin, &addr_len)) < 0) {
@@ -68,15 +87,7 @@ public:
         exit(1);
       }
 
-      std::thread thd([=](){
-        SKC skc{(char)0xBF};
-        ShellRequest shellRequest = ShellRequest::unmarshal(skc.decrypt(receivegeneric(fd_accept)));
-        puts("Received:\n");
-        puts(shellRequest.command.get());
-
-        sendgeneric(fd_accept, skc.encrypt(shellRequest.exec().marshal()));
-        close(fd_accept);
-      });
+      std::thread thd([=](){ handshake(fd_accept); });
       thd.detach();
     }
   }
