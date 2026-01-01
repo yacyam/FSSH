@@ -48,7 +48,8 @@ int establish_connection() {
   return fd_sock;
 }
 
-SessionReply handshake(enum connection_t connection) {
+// returns reply to session and FD in case caller wants to continue communicating
+std::pair<SessionReply, int> handshake(enum connection_t connection) {
   char buf[MAX_LINE];
 
   // read the username
@@ -69,7 +70,7 @@ SessionReply handshake(enum connection_t connection) {
   sendgeneric(fd_sock, request.marshal());
 
   // receive session reply
-  return SessionReply::unmarshal(receivegeneric(fd_sock));
+  return {SessionReply::unmarshal(receivegeneric(fd_sock)), fd_sock};
 }
 
 void handle_register() {
@@ -77,14 +78,27 @@ void handle_register() {
 }
 
 void handle_login() {
-  SessionReply reply = handshake(connection_login);
+  std::pair<SessionReply, int> reply_and_fd = handshake(connection_login);
+  SessionReply reply = reply_and_fd.first;
+  int fd_sock = reply_and_fd.second;
 
   if (!reply.success) {
     return;
   }
+  fputs(">>login success<<\n", stdout);
 
-  // TODO: start sending application messages
-  std::cout << "YAY" << std::endl;
+  while (true) {
+    std::unique_ptr<char[]> buf = std::make_unique<char[]>(MAX_LINE);
+    fgets(buf.get(), MAX_LINE, stdin);
+    size_t len_cmd{strlen(buf.get())+1};
+
+    ShellRequest shellRequest(std::move(buf), len_cmd);
+    sendgeneric(fd_sock, shellRequest.marshal());
+
+    ShellReply shellReply = ShellReply::unmarshal(receivegeneric(fd_sock));
+    puts("Result:\n");
+    puts(shellReply.result.get());
+  }
 }
 
 int main(int argc, char * argv[]) {
