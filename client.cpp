@@ -48,7 +48,7 @@ int establish_connection() {
   return fd_sock;
 }
 
-void handle_register() {
+SessionReply handshake(enum connection_t connection) {
   char buf[MAX_LINE];
 
   // read the username
@@ -63,15 +63,28 @@ void handle_register() {
   remove_newline(pwd.get());
   size_t len_pwd = strlen(pwd.get());
 
-  // send register request
+  // send session request
   int fd_sock = establish_connection();
-  SessionRequest sessionRequest{connection_register, uid, std::move(pwd), len_pwd};
-  sendgeneric(fd_sock, sessionRequest.marshal());
+  SessionRequest request{connection, uid, std::move(pwd), len_pwd};
+  sendgeneric(fd_sock, request.marshal());
+
+  // receive session reply
+  return SessionReply::unmarshal(receivegeneric(fd_sock));
+}
+
+void handle_register() {
+  handshake(connection_register);
 }
 
 void handle_login() {
-  std::cout << "login unimplemented" << std::endl;
-  std::terminate();
+  SessionReply reply = handshake(connection_login);
+
+  if (!reply.success) {
+    return;
+  }
+
+  // TODO: start sending application messages
+  std::cout << "YAY" << std::endl;
 }
 
 int main(int argc, char * argv[]) {
@@ -93,6 +106,6 @@ int main(int argc, char * argv[]) {
       std::cout << "Unknown command type" << std::endl;
       break;
     }
-    fputs("command: ", stdout);
+    fputs("\ncommand: ", stdout);
   }
 }

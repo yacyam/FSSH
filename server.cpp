@@ -11,7 +11,7 @@
 #include <string.h>
 #include "auth.hpp"
 #include "app.hpp"
-#include "sym.hpp"
+#include "session.hpp"
 
 #define MAX_PENDING  1
 #define MAX_LINE     256
@@ -31,18 +31,16 @@ public:
 
     switch (sessionRequest.connection) {
     case connection_register:
-      std::cout << "ConnectionAcceptor.handshake: Register Unimplemented" << std::endl;
-      close(fd_accepted_conn);
+      Session::handleRegister(fd_accepted_conn, std::move(sessionRequest));
       break;
     case connection_login:
-      std::cout << "ConnectionAcceptor.handshake: Login Unimplemented" << std::endl;
-      close(fd_accepted_conn);
+      Session::handleLogin(fd_accepted_conn, std::move(sessionRequest));
       break;
     default:
       std::cout << "ConnectionAcceptor.handshake: Unknown Connection Type" << std::endl;
-      close(fd_accepted_conn);
       break;
     }
+    close(fd_accepted_conn);
   }
   
   void run() {
